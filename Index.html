@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Detector | Pym Suite</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="toast"></div>
+
+    <div id="apiKeyModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>App Settings</h3>
+                <button class="close-btn" onclick="closeModal()">✕</button>
+            </div>
+            
+            <div class="setting-group">
+                <label>UI Theme</label>
+                <select id="themeSelect" onchange="changeTheme(this.value)">
+                    <option value="light">Light Mode</option>
+                    <option value="dark">Dark Mode</option>
+                    <option value="midnight">Midnight OLED</option>
+                    <option value="typewriter">Typewriter (Vintage)</option>
+                </select>
+                <label>AI Detection Model</label>
+                <select id="modelSelect" onchange="saveModelSelection(this.value)">
+                    <option>Loading models...</option>
+                </select>
+            </div>
+
+            <!-- Add this after the API Key input field in the modal -->
+            <div class="setting-group">
+                <label>API Key (Optional)</label>
+                <input type="password" id="apiKeyInput" placeholder="Enter OpenRouter API Key...">
+                <small id="apiStatus" style="margin-top: 8px; font-size: 12px;">Checking...</small>
+            </div>
+
+            <div class="modal-buttons">
+                <button onclick="saveSettings()" class="primary-btn">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="top-bar">
+        <div class="logo-area">
+            <h1>🔍 AI Detector</h1>
+        </div>
+        <div class="top-actions">
+            <div class="word-count-display"><span id="wordCount">0</span> words</div>
+            <button class="icon-btn" onclick="openModal()">⚙️</button>
+        </div>
+    </div>
+
+    <div id="main-content">
+        <aside class="sidebar-panel">
+            <div class="sidebar-header">
+                <h3>Recent Scans</h3>
+                <button class="text-btn" onclick="clearHistory()">Clear All</button>
+            </div>
+            <div id="historyList" class="history-list"></div>
+        </aside>
+
+        <main class="editor-area">
+            <div class="container">
+                <div class="input-card">
+                    <textarea id="textInput" placeholder="Paste text here to analyze for AI patterns... (100 characters minimum)" oninput="updateStats()"></textarea>
+                    <div class="action-bar">
+                        <button onclick="analyzeText()" id="scanBtn" class="primary-btn">Analyze Writing</button>
+                        <button onclick="clearText()" class="secondary-btn">Clear</button>
+                    </div>
+                </div>
+
+                <div id="resultCard" class="result-card" style="display: none;">
+                    <div class="result-header">
+                        <h3>Analysis Verdict</h3>
+                    </div>
+                    <div class="gauge-container">
+                        <div id="gaugeFill" class="gauge-fill"></div>
+                    </div>
+                    <div class="result-grid">
+                        <div class="stat-box">
+                            <span class="label">AI Probability</span>
+                            <span id="aiProb" class="value">0%</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="label">Verdict</span>
+                            <div class="typewriter-container">
+                                <span id="verdict" class="value"></span><span class="cursor">|</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
