@@ -190,6 +190,7 @@ function saveSettings() {
 }
 
 // --- Analysis Logic ---
+// --- Analysis Logic ---
 async function analyzeText() {
     const text = document.getElementById('textInput').value.trim();
     if (text.length < 100) {
@@ -198,16 +199,17 @@ async function analyzeText() {
     }
 
     const btn = document.getElementById('scanBtn');
-    btn.innerText = "Analyzing...";
+    const btnOriginalText = btn.innerText;
     btn.disabled = true;
+    
+    // Show loading state
+    showLoadingState();
 
-    // Note: You should rename your localStorage key to 'openrouter_token' for clarity
     const apiKey = localStorage.getItem('hf_token'); 
     let score;
 
     if (apiKey && apiKey.trim()) {
         try {
-            // Call the new OpenRouter helper
             const result = await callOpenRouterAPI(text, apiKey);
             score = result.score;
             showToast("Analysis complete!");
@@ -215,7 +217,6 @@ async function analyzeText() {
             console.error("OpenRouter Error:", error);
             showToast("⚠ API Error - Using mock data.");
             
-            // Fallback to mock data
             await new Promise(resolve => setTimeout(resolve, 1000));
             score = Math.random();
         }
@@ -225,15 +226,56 @@ async function analyzeText() {
         showToast("Using mock data (no API key)");
     }
 
+    hideLoadingState();
     displayResult(score);
     
     const title = prompt("Give this scan a title (optional):", text.substring(0, 30) + "...");
     const displayTitle = title && title.trim() ? title.trim() : text.substring(0, 35) + "...";
     
-    addToHistory(displayTitle, score, text); //
+    addToHistory(displayTitle, score, text);
     
-    btn.innerText = "Analyze Writing";
+    btn.innerText = btnOriginalText;
     btn.disabled = false;
+}
+
+function showLoadingState() {
+    const btn = document.getElementById('scanBtn');
+    btn.innerHTML = `
+        <span class="loading-spinner"></span>
+        <span>Analyzing</span>
+        <span class="loading-dots"></span>
+    `;
+    
+    // Show loading overlay
+    const loadingOverlay = document.createElement('div');
+    loadingOverlay.id = 'loadingOverlay';
+    loadingOverlay.className = 'loading-overlay';
+    loadingOverlay.innerHTML = `
+        <div class="loading-content">
+            <div class="loading-circle">
+                <div class="loading-bar"></div>
+            </div>
+            <p class="loading-text">Analyzing text patterns...</p>
+            <div class="loading-progress">
+                <div class="loading-progress-bar"></div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(loadingOverlay);
+    
+    // Animate progress bar
+    setTimeout(() => {
+        const progressBar = document.querySelector('.loading-progress-bar');
+        if (progressBar) progressBar.style.width = '100%';
+    }, 100);
+}
+
+function hideLoadingState() {
+    const overlay = document.getElementById('loadingOverlay');
+    if (overlay) {
+        overlay.style.opacity = '0';
+        setTimeout(() => overlay.remove(), 300);
+    }
 }
 
 async function callOpenRouterAPI(text, apiKey) {
