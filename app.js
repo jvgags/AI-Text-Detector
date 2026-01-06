@@ -192,7 +192,7 @@ function saveSettings() {
 // --- Analysis Logic ---
 // --- Analysis Logic ---
 async function analyzeText() {
-    const text = document.getElementById('textInput').value.trim();
+    const text = document.getElementById('textInput').innerText.trim();
     if (text.length < 100) {
         showToast("Text too short for reliable analysis.");
         return;
@@ -290,11 +290,11 @@ async function callOpenRouterAPI(text, apiKey) {
             "Content-Type": "application/json"
         },
         body: JSON.stringify({
-            "model": selectedModel, // Using the user's selected model here
+            "model": selectedModel, 
             "messages": [
                 {
                     "role": "system",
-                    "content": "Analyze the provided text and return ONLY a JSON object with 'score' (0-1 float for AI probability)."
+                    "content": "Analyze the provided text and return ONLY a JSON object with 'score' (0-1 float for AI probability). Do not include markdown code blocks."
                 },
                 { "role": "user", "content": text }
             ],
@@ -303,9 +303,26 @@ async function callOpenRouterAPI(text, apiKey) {
     });
 
     if (!response.ok) throw new Error(`API Error: ${response.status}`);
+    
     const data = await response.json();
-    const content = JSON.parse(data.choices[0].message.content);
-    return { score: content.score };
+    let rawContent = data.choices[0].message.content.trim();
+
+    // SAFETY FIX: Strip markdown backticks if the AI included them
+    const firstBrace = rawContent.indexOf('{');
+    const lastBrace = rawContent.lastIndexOf('}');
+    
+    if (firstBrace !== -1 && lastBrace !== -1) {
+        // Extract only the part from the first '{' to the last '}'
+        rawContent = rawContent.substring(firstBrace, lastBrace + 1);
+    }
+
+    try {
+        const content = JSON.parse(rawContent);
+        return { score: content.score };
+    } catch (e) {
+        console.error("Failed to parse AI response. Raw content was:", rawContent);
+        throw new Error("The AI returned a response that wasn't valid JSON.");
+    }
 }
 
 // --- OpenRouter Model Management ---
@@ -394,15 +411,22 @@ function displayResult(score) {
     const resultCard = document.getElementById('resultCard');
     const gauge = document.getElementById('gaugeFill');
     
+    // 1. Make the card visible first
     resultCard.style.display = "block";
     
-    // Update Gauge
+    // 2. Automatically scroll to the result card
+    // 'smooth' creates a pleasant sliding animation
+    resultCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    
+    // Update Gauge animation
     setTimeout(() => { gauge.style.width = percentage + "%"; }, 100);
+    
+    // Set colors based on risk level
     gauge.style.background = score > 0.7 ? "var(--error-color)" : (score > 0.4 ? "#f1c40f" : "var(--success-color)");
     
     document.getElementById('aiProb').innerText = percentage + "%";
     
-    // Typewriter Verdict
+    // Start Typewriter Verdict
     const verdict = score > 0.7 ? "Likely AI-Generated" : (score > 0.4 ? "Potentially Mixed" : "Likely Human-Written");
     typeWriter(verdict, "verdict");
 }
@@ -425,7 +449,7 @@ function typeWriter(text, elementId) {
 
 // --- History & Stats ---
 function updateStats() {
-    const text = document.getElementById('textInput').value.trim();
+    const text = document.getElementById('textInput').innerText.trim();
     const words = text ? text.split(/\s+/).length : 0;
     document.getElementById('wordCount').innerText = words;
 }
@@ -447,8 +471,8 @@ function addToHistory(label, score, fullText) {
 function loadHistoryItem(id) {
     const item = history.find(h => h.id === id);
     if (!item) return;
-    
-    document.getElementById('textInput').value = item.text;
+
+    document.getElementById('textInput').innerText = item.text; // Use innerText
     updateStats();
     displayResult(item.score);
     document.querySelector('.editor-area').scrollTop = 0;
@@ -510,7 +534,7 @@ function clearHistory() {
 }
 
 function clearText() {
-    document.getElementById('textInput').value = "";
+    document.getElementById('textInput').innerHTML = ""; // Use innerHTML for divs
     document.getElementById('resultCard').style.display = "none";
     updateStats();
 }
@@ -520,4 +544,9 @@ function showToast(msg) {
     x.innerText = msg;
     x.className = "show";
     setTimeout(() => { x.className = x.className.replace("show", ""); }, 3000);
+}
+
+function formatDoc(cmd) {
+    document.execCommand(cmd, false, null);
+    document.getElementById('textInput').focus();
 }

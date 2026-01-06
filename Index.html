@@ -65,7 +65,19 @@
         <main class="editor-area">
             <div class="container">
                 <div class="input-card">
-                    <textarea id="textInput" placeholder="Paste text here to analyze for AI patterns... (100 characters minimum)" oninput="updateStats()"></textarea>
+                    <div class="rich-editor-wrapper">
+                        <div class="editor-toolbar">
+                            <button type="button" onclick="formatDoc('bold')" title="Bold"><b>B</b></button>
+                            <button type="button" onclick="formatDoc('italic')" title="Italic"><i>I</i></button>
+                            <button type="button" onclick="formatDoc('underline')" title="Underline"><u>U</u></button>
+                            <button type="button" onclick="formatDoc('insertUnorderedList')" title="Bullet List">• List</button>
+                        </div>
+                        <div id="textInput" 
+                            class="rich-editor" 
+                            contenteditable="true" 
+                            placeholder="Paste text here to analyze..." 
+                            oninput="updateStats()"></div>
+                    </div>
                     <div class="action-bar">
                         <button onclick="analyzeText()" id="scanBtn" class="primary-btn">Analyze Writing</button>
                         <button onclick="clearText()" class="secondary-btn">Clear</button>

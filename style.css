@@ -765,3 +765,57 @@ select option {
 .primary-btn:disabled .loading-spinner {
     display: inline-block;
 }
+
+/* Rich Text Editor Styles */
+.rich-editor-wrapper {
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    background: var(--bg-primary);
+    overflow: hidden;
+    transition: border-color 0.2s;
+}
+
+.rich-editor-wrapper:focus-within {
+    border-color: var(--accent-primary);
+}
+
+.editor-toolbar {
+    padding: 8px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    gap: 5px;
+}
+
+.editor-toolbar button {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.editor-toolbar button:hover {
+    background: var(--border-color);
+}
+
+.rich-editor {
+    width: 100%;
+    min-height: 300px;
+    max-height: 500px;
+    padding: 20px;
+    font-size: 15px;
+    line-height: 1.6;
+    overflow-y: auto;
+    color: var(--text-primary);
+    outline: none;
+}
+
+/* Placeholder logic for contenteditable */
+.rich-editor:empty:before {
+    content: attr(placeholder);
+    color: var(--text-secondary);
+    cursor: text;
+}
