@@ -6,6 +6,8 @@ let currentTheme = localStorage.getItem('ai_theme') || 'light';
 let OPENROUTER_MODELS = []; 
 let modelsLoaded = false;
 
+let currentActiveId = null;
+
 // Initialization
 window.onload = () => {
     applyTheme(currentTheme);
@@ -455,28 +457,38 @@ function updateStats() {
 }
 
 function addToHistory(label, score, fullText) {
-    const item = { 
+    const item = {
         id: Date.now(),
-        label, 
-        score,
+        label: label || "Untitled Scan",
+        score: score,
         text: fullText,
-        date: new Date().toLocaleTimeString() 
+        date: new Date().toLocaleString()
     };
     history.unshift(item);
-    if (history.length > 8) history.pop();
+    
+    // Set this new scan as the active one
+    currentActiveId = item.id; 
+    
     localStorage.setItem('ai_history', JSON.stringify(history));
     renderHistory();
+    updateStats();
 }
 
 function loadHistoryItem(id) {
+    currentActiveId = id; // Track the selected ID
+    
     const item = history.find(h => h.id === id);
-    if (!item) return;
-
-    document.getElementById('textInput').innerText = item.text; // Use innerText
-    updateStats();
-    displayResult(item.score);
-    document.querySelector('.editor-area').scrollTop = 0;
-    showToast("Scan Loaded");
+    if (item) {
+        document.getElementById('textInput').innerHTML = item.text;
+        displayResult(item.score);
+        updateStats();
+        
+        // Refresh the list to apply the active highlight
+        renderHistory();
+        
+        // Smoothly scroll to the results card
+        document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
 }
 
 function deleteHistoryItem(id, event) {
@@ -509,19 +521,26 @@ function renderHistory() {
         list.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No scans yet</p>';
         return;
     }
-    list.innerHTML = history.map(item => `
-        <div class="history-item" onclick="loadHistoryItem(${item.id})">
-            <div class="hist-info">
-                <strong>${item.label}</strong>
-                <small>${item.date}</small>
+
+    list.innerHTML = history.map(item => {
+        // Check if this specific item should be highlighted
+        const isActive = item.id === currentActiveId ? 'active' : '';
+        
+        return `
+            <div class="history-item ${isActive}" 
+                 onclick="loadHistoryItem(${item.id})" 
+                 title="${item.label}"> <div class="hist-info">
+                    <strong>${item.label}</strong>
+                    <small>${item.date}</small>
+                </div>
+                <div class="hist-actions">
+                    <span class="hist-score">${Math.round(item.score * 100)}%</span>
+                    <button class="hist-btn" onclick="renameHistoryItem(${item.id}, event)" title="Rename">✏️</button>
+                    <button class="hist-btn" onclick="deleteHistoryItem(${item.id}, event)" title="Delete">🗑️</button>
+                </div>
             </div>
-            <div class="hist-actions">
-                <span class="hist-score">${Math.round(item.score * 100)}%</span>
-                <button class="hist-btn" onclick="renameHistoryItem(${item.id}, event)" title="Rename">✏️</button>
-                <button class="hist-btn" onclick="deleteHistoryItem(${item.id}, event)" title="Delete">🗑️</button>
-            </div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
 function clearHistory() {
